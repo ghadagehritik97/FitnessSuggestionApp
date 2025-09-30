@@ -4,6 +4,7 @@ import com.fitness.activityservice.dto.ActivityRequest;
 import com.fitness.activityservice.dto.ActivityResponse;
 import com.fitness.activityservice.entity.Activity;
 import com.fitness.activityservice.repository.ActivityRepository;
+import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,12 +12,20 @@ import java.util.List;
 
 @Service
 public class ActivityServiceImpl implements ActivityService{
+
     @Autowired
     private ActivityRepository actRepository;
 
+    @Autowired
+    private UserDetailsWebClient userDetailsWebClient;
+
     @Override
     public ActivityResponse trackActivity(ActivityRequest activityRequest) {
-        Activity activity=Activity.builder()
+        Boolean isValid = userDetailsWebClient.validateUser(activityRequest.getUserId());
+        if (!isValid) {
+            throw new RuntimeException("Invalid userId: " + activityRequest.getUserId());
+        }
+        Activity activity = Activity.builder()
                 .userId(activityRequest.getUserId())
                 .type(activityRequest.getActivityType())
                 .caloriesBurned(activityRequest.getCaloriesBurned())
@@ -24,7 +33,8 @@ public class ActivityServiceImpl implements ActivityService{
                 .startTime(activityRequest.getStartTime())
                 .additionalMetrics(activityRequest.getAdditionalMetrics())
                 .build();
-        Activity savedActivity=actRepository.save(activity);
+        Activity savedActivity = actRepository.save(activity);
+
         return mapToResponse(savedActivity);
     }
 

@@ -47,4 +47,9 @@ public class UserServiceImpl implements UserService{
         response.setPassword(savedUser.getPassword());
         return response;
     }
+
+    @Override
+    public Boolean validateUser(String userId) {
+        return userRepository.existsById(userId);
+    }
 }

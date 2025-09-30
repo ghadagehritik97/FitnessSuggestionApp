@@ -27,6 +27,13 @@ public class UserController {
         return new ResponseEntity<>(userResponse,HttpStatus.OK);
 
     }
+    @GetMapping("/{userId}/validate")
+    public ResponseEntity<Boolean> validateUser(@PathVariable String userId) {
+        logger.info("Fetching user with id: {}", userId);
+        Boolean isValidUser=userService.validateUser(userId);
+        return new ResponseEntity<>(isValidUser,HttpStatus.OK);
+
+    }
 
     @PostMapping("/registerUser")
     public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody UserRequest userRequest) {

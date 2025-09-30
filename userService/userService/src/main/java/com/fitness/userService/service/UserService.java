@@ -10,4 +10,6 @@ public interface UserService {
     UserResponse getUser(String userId);
 
     UserResponse registerUser(@Valid UserRequest userRequest);
+
+    Boolean validateUser(String userId);
 }
