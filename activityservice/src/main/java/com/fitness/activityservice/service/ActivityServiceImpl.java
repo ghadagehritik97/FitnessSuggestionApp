@@ -5,19 +5,31 @@ import com.fitness.activityservice.dto.ActivityResponse;
 import com.fitness.activityservice.entity.Activity;
 import com.fitness.activityservice.repository.ActivityRepository;
 import com.netflix.discovery.converters.Auto;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class ActivityServiceImpl implements ActivityService{
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     @Autowired
     private ActivityRepository actRepository;
 
     @Autowired
     private UserDetailsWebClient userDetailsWebClient;
+
+    @Value("${rabbitmq.exchange.name}")
+    private String exchange;
+
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
 
     @Override
     public ActivityResponse trackActivity(ActivityRequest activityRequest) {
@@ -34,7 +46,12 @@ public class ActivityServiceImpl implements ActivityService{
                 .additionalMetrics(activityRequest.getAdditionalMetrics())
                 .build();
         Activity savedActivity = actRepository.save(activity);
-
+        // publish to rabbitmq with try and catch
+         try {
+             rabbitTemplate.convertAndSend(exchange, routingKey, savedActivity);
+         } catch (Exception e) {
+                log.error("Error publishing to RabbitMQ: {}", e.getMessage());
+         }
         return mapToResponse(savedActivity);
     }
 
